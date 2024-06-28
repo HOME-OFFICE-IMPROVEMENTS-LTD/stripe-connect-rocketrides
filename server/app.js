@@ -76,6 +76,9 @@ app.use('/api/settings', require('./routes/api/settings'));
 app.use('/api/rides', require('./routes/api/rides'));
 app.use('/api/passengers', require('./routes/api/passengers'));
 
+// Charge route for testing payments
+app.use('/charge', require('./routes/charge'));
+
 // Index page for Rocket Rides
 app.get('/', (req, res) => {
   res.render('index');
@@ -116,3 +119,4 @@ app.use((err, req, res) => {
 const server = app.listen(process.env.PORT || config.port, () => {
   console.log('🚀 Rocket Rides server started:', config.publicDomain);
 });
+

@@ -1,7 +1,7 @@
 'use strict';
 
 const config = require('../../config');
-const stripe = require('stripe')(config.stripe.secretKey, {
+const stripe = require('stripe')(process.env.STRIPE_SECRET_KEY || config.stripe.secretKey, {
   apiVersion: config.stripe.apiVersion || '2022-08-01'
 });
 const express = require('express');
@@ -83,12 +83,7 @@ router.post('/rides', pilotRequired, async (req, res, next) => {
   await ride.save();
   try {
     // Get a test source, using the given testing behavior
-    let source;
-    if (req.body.immediate_balance) {
-      source = getTestSource('immediate_balance');
-    } else if (req.body.payout_limit) {
-      source = getTestSource('payout_limit');
-    }
+    let source = 'tok_visa';
     let charge;
     // Accounts created in Japan/Germany have the `full` service agreement and must create their own card payments
     if (pilot.country === 'JP' || pilot.country === 'DE') {
@@ -96,7 +91,7 @@ router.post('/rides', pilotRequired, async (req, res, next) => {
       charge = await stripe.charges.create({
         source: source,
         amount: ride.amount,
-        currency: ride.currency,
+        currency: 'usd',
         description: config.appName,
         statement_descriptor: config.appName,
         on_behalf_of: pilot.stripeAccountId,
@@ -115,7 +110,7 @@ router.post('/rides', pilotRequired, async (req, res, next) => {
       charge = await stripe.charges.create({
         source: source,
         amount: ride.amount,
-        currency: ride.currency,
+        currency: 'usd',
         description: config.appName,
         statement_descriptor: config.appName,
         // The `transfer_group` parameter must be a unique id for the ride; it must also match between the charge and transfer
@@ -123,7 +118,7 @@ router.post('/rides', pilotRequired, async (req, res, next) => {
       });
       const transfer = await stripe.transfers.create({
         amount: ride.amountForPilot(),
-        currency: ride.currency,
+        currency: 'usd',
         destination: pilot.stripeAccountId,
         transfer_group: ride.id
       })
@@ -294,3 +289,4 @@ function getRandomInt(min, max) {
 }
 
 module.exports = router;
+
